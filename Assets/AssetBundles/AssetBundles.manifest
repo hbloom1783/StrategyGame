@@ -1,0 +1,10 @@
+ManifestFileVersion: 0
+CRC: 3667897393
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: battle/recipes
+      Dependencies: {}
+    Info_1:
+      Name: battle/sprites
+      Dependencies: {}

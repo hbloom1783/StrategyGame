@@ -41,3 +41,12 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Map Cells
+    uniqueID: 2601591765
+    locked: 0
+  - name: Map Units
+    uniqueID: 1446652351
+    locked: 0
+  - name: GUI
+    uniqueID: 1445708883
+    locked: 0
