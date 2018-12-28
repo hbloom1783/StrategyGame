@@ -1,6 +1,6 @@
 ﻿using StrategyGame.UI;
 
-namespace StrategyGame.Strategic.UI
+namespace StrategyGame.UI
 {
     public class SystemMenu : UiElement
     {

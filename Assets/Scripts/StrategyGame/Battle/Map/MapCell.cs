@@ -22,7 +22,7 @@ namespace StrategyGame.Battle.Map
     
     public class MapCell : HexGridCell, IPoolable
     {
-        private MapUnit _unitPresent;
+        private MapUnit _unitPresent = null;
         public MapUnit unitPresent
         {
             get { return _unitPresent; }
@@ -179,7 +179,11 @@ namespace StrategyGame.Battle.Map
                 type = value.type;
 
                 if (unitPresent != null) unitPresent.sticker.Return();
-                if (value.unitPresent != null)
+                if (value.unitPresent == null)
+                {
+                    unitPresent = null;
+                }
+                else
                 {
                     map.PlaceUnit(GameController.instance.pools.battleMapUnitPool.Provide<MapUnit>(), loc);
                     unitPresent.persist = value.unitPresent;

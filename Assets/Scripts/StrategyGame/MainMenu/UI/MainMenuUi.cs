@@ -37,6 +37,8 @@ namespace StrategyGame.MainMenu.UI
         public UiElement settingsButton;
         public UiElement quitButton;
 
+        public UnityEngine.UI.Text tempText;
+
         #endregion
     }
 }

@@ -72,18 +72,22 @@ namespace StrategyGame.MainMenu.Game
         {
             if (element == ui.newGameButton)
             {
+                ui.tempText.text = "New Game";
                 game.NewGame();
             }
             else if (element == ui.loadGameButton)
             {
+                ui.tempText.text = "Load Game";
                 game.LoadGame();
             }
             else if (element == ui.settingsButton)
             {
                 // TODO: Settings menu
+                ui.tempText.text = "Settings";
             }
             else if (element == ui.quitButton)
             {
+                ui.tempText.text = "Quit";
                 game.Quit();
             }
             else

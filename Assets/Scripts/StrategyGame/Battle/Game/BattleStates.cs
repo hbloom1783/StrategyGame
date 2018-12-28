@@ -1,11 +1,12 @@
 ﻿using Athanor.StateMachine;
-using StrategyGame.Battle.Game.Abilities;
 using StrategyGame.Battle.Map;
 using StrategyGame.Battle.Persistence;
 using StrategyGame.Battle.UI;
 using StrategyGame.Game;
 using StrategyGame.Game.Persistence;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace StrategyGame.Battle.Game
@@ -19,6 +20,11 @@ namespace StrategyGame.Battle.Game
         protected GameController game { get { return GameController.instance; } }
         protected MapController map { get { return MapController.instance; } }
         protected BattleUi ui { get { return BattleUi.instance; } }
+
+        protected IEnumerable<MapUnit> TeamUnits(Team team)
+        {
+            return map.units.Where(x => x.team == team);
+        }
 
         public abstract void EnterState();
         public abstract void LeaveState();

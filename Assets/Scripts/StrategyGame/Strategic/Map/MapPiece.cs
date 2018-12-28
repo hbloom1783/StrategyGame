@@ -27,6 +27,7 @@ namespace StrategyGame.Strategic.Map
                 HexCoords newPoint = newPiece.content.Keys
                     .Frontier()
                     .Where(x => HexCoords.O.DistanceTo(x) <= 2)
+                    .ToList()
                     .RandomPick();
 
                 newPiece.content[newPoint] = CellType.greenPlain;

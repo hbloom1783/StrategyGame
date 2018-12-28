@@ -5,20 +5,6 @@ using UnityEngine.UI;
 
 namespace StrategyGame.Battle.UI
 {
-    [CreateAssetMenu(fileName = "FormData", menuName = "Athanor/UI/IconFormData", order = 1)]
-    public class IconFormData : ScriptableObject
-    {
-        public Sprite image = null;
-        public Color color = Color.white;
-    }
-
-    public enum IconForm
-    {
-        invalid,
-        heart,
-        action,
-    }
-
     public class BattleIcon : UiElement, IPoolable
     {
         public IconFormData heartForm;
@@ -67,4 +53,12 @@ namespace StrategyGame.Battle.UI
 
         #endregion
     }
+
+    public enum IconForm
+    {
+        invalid,
+        heart,
+        action,
+    }
+
 }

@@ -415,7 +415,7 @@ namespace StrategyGame.Strategic.Game
                 game.state.ChangeState(new UnitIsMoving
                 {
                     unit = unit,
-                    path = unit.AStar(cell.loc).Skip(1),
+                    path = unit.AStar(cell.loc),
                 });
             }
         }

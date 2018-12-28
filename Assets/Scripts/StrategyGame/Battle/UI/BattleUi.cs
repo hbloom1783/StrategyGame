@@ -33,10 +33,15 @@ namespace StrategyGame.Battle.UI
         #region UI Elements
 
         public ColorText marqueeText = null;
-        public ElementHolder abilityBar = null;
+
+        public UiElement systemMenuButton = null;
         public UiElement endTurnButton = null;
-        public UiElement confirmButton = null;
+
         public ColorText instructions = null;
+        public UiElement confirmButton = null;
+        public ElementHolder abilityBar = null;
+
+        public SystemMenu systemMenu = null;
 
         #endregion
     }

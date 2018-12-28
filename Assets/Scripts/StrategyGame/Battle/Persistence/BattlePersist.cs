@@ -17,14 +17,14 @@ namespace StrategyGame.Battle.Persistence
 
         public Team team = Team.player;
 
-        public int maxHp = 5;
-        public int hp = 5;
+        public int maxHp = 0;
+        public int hp = 0;
 
-        public int maxAp = 2;
-        public int ap = 2;
+        public int maxAp = 0;
+        public int ap = 0;
 
-        public int speed = 5;
-        public int jump = 3;
+        public int speed = 0;
+        public int jump = 0;
 
         public string[] abilityList = new string[0];
     }
@@ -65,12 +65,14 @@ namespace StrategyGame.Battle.Persistence
             // Add units
             result.mapContents.Values
                 .Where(x => (x.type == CellType.walkable) && (x.unitPresent == null))
+                .ToList()
                 .RandomPick()
                 .unitPresent = Resources.Load<MapUnitRecipe>("Battle Units/Sonic").persist;
 
             foreach (int idx in Enumerable.Range(0, Random.Range(2, 4)))
                 result.mapContents.Values
                     .Where(x => (x.type == CellType.walkable) && (x.unitPresent == null))
+                    .ToList()
                     .RandomPick()
                     .unitPresent = Resources.Load<MapUnitRecipe>("Battle Units/Motobug").persist;
 

@@ -221,6 +221,9 @@ namespace StrategyGame.Strategic.Map
 
         void Start()
         {
+#if UNITY_EDITOR
+            debugText.enabled = true;
+#endif
             UpdateAppearance();
         }
 

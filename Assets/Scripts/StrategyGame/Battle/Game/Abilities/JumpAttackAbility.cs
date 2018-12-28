@@ -1,8 +1,6 @@
 ﻿using GridLib.Hex;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using StrategyGame.Battle.Map;
 using System.Collections;
 using UnityEngine;
@@ -77,7 +75,7 @@ namespace StrategyGame.Battle.Game.Abilities
             }
             else if (landing == null)
             {
-                return target.Ring(2)
+                return target.Ring(1)
                     .Where(map.InBounds)
                     .Where(unit.CanEnter);
             }

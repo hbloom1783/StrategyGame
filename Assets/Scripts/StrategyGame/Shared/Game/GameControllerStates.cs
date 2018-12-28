@@ -3,6 +3,10 @@ using StrategyGame.Game.Persistence;
 using System.Collections;
 using UnityEngine;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 namespace StrategyGame.Game
 {
     #region Abstracts
@@ -96,15 +100,16 @@ namespace StrategyGame.Game
 
         public override IEnumerator Script()
         {
-            yield return game.state.SteadyChange(null);
 
             Debug.Log("Quitting...");
 
 #if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
+            EditorApplication.isPlaying = false;
 #else
             Application.Quit();
 #endif
+
+            yield return game.state.SteadyChange(null);
         }
     }
 }

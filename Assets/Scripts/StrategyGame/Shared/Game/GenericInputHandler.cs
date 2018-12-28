@@ -48,17 +48,17 @@ namespace StrategyGame.Game.InputHandling
             {
                 if (e.keyCode != KeyCode.None)
                 {
-                    if ((e.type == EventType.keyDown) && (keyDown != null))
+                    if ((e.type == EventType.KeyDown) && (keyDown != null))
                         keyDown(e.keyCode);
-                    else if ((e.type == EventType.keyUp) && (keyUp != null))
+                    else if ((e.type == EventType.KeyUp) && (keyUp != null))
                         keyUp(e.keyCode);
                 }
             }
             else if (e.isMouse)
             {
-                if ((e.type == EventType.mouseDown) && (mouseDown != null))
+                if ((e.type == EventType.MouseDown) && (mouseDown != null))
                     mouseDown(IdentifyButton(e.button));
-                if ((e.type == EventType.mouseUp) && (mouseUp != null))
+                if ((e.type == EventType.MouseUp) && (mouseUp != null))
                     mouseUp(IdentifyButton(e.button));
             }
         }

@@ -6,11 +6,6 @@ namespace Athanor.Collections
 {
     public static class RandExt
     {
-        public static T RandomPick<T>(this IEnumerable<T> input)
-        {
-            return input.ToList().RandomPick();
-        }
-
         public static T RandomPick<T>(this ICollection<T> input)
         {
             return input.ElementAt(Random.Range(0, input.Count - 1));

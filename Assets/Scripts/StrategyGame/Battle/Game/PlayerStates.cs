@@ -1,11 +1,10 @@
 ﻿using Athanor.Colors;
-using Athanor.StateMachine;
 using Athanor.Tweening;
-using GridLib.Hex;
 using StrategyGame.Battle.Game.Abilities;
 using StrategyGame.Battle.Map;
 using StrategyGame.Battle.UI;
 using StrategyGame.UI;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -162,6 +161,28 @@ namespace StrategyGame.Battle.Game.Player
         }
     }
 
+    class CheckVictory : BattleScript
+    {
+        public MapUnit unit = null;
+
+        public override IEnumerator Script()
+        {
+            // Dump to persistence
+            map.SaveToPersistence();
+
+            // Check for victory
+            if (!TeamUnits(Team.player).Where(x => x.hp > 0).Any())
+                yield return game.state.SteadyChange(new Defeated());
+            else if (!TeamUnits(Team.enemy).Where(x => x.hp > 0).Any())
+                yield return game.state.SteadyChange(new Enemy.Defeated());
+            // Identify next state
+            else if ((unit != null) & (unit.ap > 0))
+                yield return game.state.SteadyChange(new SelectAbility { unit = unit });
+            else
+                yield return game.state.SteadyChange(new SelectUnit());
+        }
+    }
+
     class SelectUnit : BattleShimmerState
     {
         private List<MapCell> selectableCells = null;
@@ -175,6 +196,7 @@ namespace StrategyGame.Battle.Game.Player
             game.input.uiSignal += UiSignal;
 
             ui.endTurnButton.shown = true;
+            ui.systemMenuButton.shown = true;
 
             map.events.pointerClick += PointerClick;
             map.events.pointerEnter += PointerEnter;
@@ -202,6 +224,7 @@ namespace StrategyGame.Battle.Game.Player
             map.events.pointerExit -= PointerExit;
 
             ui.endTurnButton.shown = false;
+            ui.systemMenuButton.shown = false;
 
             game.input.uiSignal -= UiSignal;
 
@@ -217,6 +240,10 @@ namespace StrategyGame.Battle.Game.Player
             if (element == ui.endTurnButton)
             {
                 game.state.ChangeState(new EndTurn());
+            }
+            else if (element == ui.systemMenuButton)
+            {
+                game.state.ChangeState(new SystemMenu());
             }
             else
             {
@@ -255,6 +282,45 @@ namespace StrategyGame.Battle.Game.Player
             {
                 RemoveSelected(cell);
             }
+        }
+
+        #endregion
+    }
+
+    public class SystemMenu : BattleState
+    {
+        #region State implementation
+
+        public override void EnterState()
+        {
+            ui.systemMenu.shown = true;
+
+            game.input.uiSignal += UiSignal;
+        }
+
+        public override void LeaveState()
+        {
+            ui.systemMenu.shown = false;
+
+            game.input.uiSignal -= UiSignal;
+        }
+
+        #endregion
+
+        #region Event handling
+
+        private void UiSignal(UiElement element)
+        {
+            if (element == ui.systemMenu.resumeGameButton)
+                game.state.ChangeState(new SelectUnit());
+            else if (element == ui.systemMenu.saveGameButton)
+                game.SaveGame();
+            else if (element == ui.systemMenu.loadGameButton)
+                game.LoadGame();
+            else if (element == ui.systemMenu.quitToMenuButton)
+                game.state.ChangeState(new MainMenu.Game.Boot());
+            else
+                Debug.Log("Received signal from unknown UI Element " + element.name);
         }
 
         #endregion
@@ -347,6 +413,7 @@ namespace StrategyGame.Battle.Game.Player
         public override void LeaveState()
         {
             ui.instructions.text = "";
+            ui.confirmButton.shown = false;
 
             game.input.mouseDown -= MouseDown;
 
@@ -394,13 +461,11 @@ namespace StrategyGame.Battle.Game.Player
         {
             ClearSelected();
             
-            if (ability.HasMaxTargets())
-            {
-                ability.GetCoveredArea()
-                    .ToList()
-                    .ForEach(x => AddSelected(map[x], blueTint));
-            }
-            else
+            ability.GetCoveredArea()
+                .ToList()
+                .ForEach(x => AddSelected(map[x], blueTint));
+
+            if (!ability.HasMaxTargets())
             {
                 if (selectableCells.Contains(map.mouseCell))
                     ability.GetAoE(map.mousePosition)
@@ -532,13 +597,7 @@ namespace StrategyGame.Battle.Game.Player
             yield return ability.Execute();
             ability.ResetInternalState();
 
-            if (ability.unit.ap > 0)
-                yield return game.state.SteadyChange(new SelectAbility
-                {
-                    unit = ability.unit,
-                });
-            else
-                yield return game.state.SteadyChange(new SelectUnit());
+            yield return game.state.SteadyChange(new CheckVictory { unit = ability.unit });
         }
     }
 
@@ -551,7 +610,18 @@ namespace StrategyGame.Battle.Game.Player
                 .ToList()
                 .ForEach(x => x.ap = x.maxAp);
 
+            // Dump to persistence
+            map.SaveToPersistence();
+
             yield return game.state.SteadyChange(new NextTurn());
+        }
+    }
+
+    class Defeated : BattleScript
+    {
+        public override IEnumerator Script()
+        {
+            throw new NotImplementedException();
         }
     }
 }
