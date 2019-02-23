@@ -118,19 +118,27 @@ namespace StrategyGame.Game
 
         void Start()
         {
+#if UNITY_EDITOR
             string sceneName = SceneManager.GetActiveScene().name;
-            if (sceneName == "Strategic")
+            if (sceneName == "Main Menu")
             {
-                //NewGame();
-                LoadGame();
+                state.ChangeState(new MainMenu.Game.Boot());
+            }
+            else if (sceneName == "Strategic")
+            {
+                NewGame();
+                //LoadGame();
             }
             else if (sceneName == "Battle")
             {
+                persist.data.strategic = Strategic.Persistence.StrategicPersist.newGame;
                 state.ChangeState(new Battle.Game.Create());
             }
-            else state.ChangeState(new MainMenu.Game.Boot());
+#else
+            state.ChangeState(new MainMenu.Game.Boot());
+#endif
         }
 
-        #endregion
+#endregion
     }
 }

@@ -6,6 +6,7 @@ using StrategyGame.Battle.Map;
 using Athanor.Collections;
 using StrategyGame.Battle.Game.Abilities;
 using GridLib.Hex;
+using System;
 
 namespace StrategyGame.Battle.Game.Enemy
 {
@@ -42,7 +43,7 @@ namespace StrategyGame.Battle.Game.Enemy
                 yield return game.state.SteadyChange(new Defeated());
             // Identify next state
             else if ((unit != null) && (unit.ap > 0))
-                yield return game.state.SteadyChange(new ChooseAbility { unit = unit });
+                yield return game.state.SteadyChange(new ChooseAbilityAndTargets { unit = unit });
             else if (TeamUnits(Team.enemy).Any(x => x.ap > 0))
                 yield return game.state.SteadyChange(new ChooseUnit());
             else
@@ -54,48 +55,55 @@ namespace StrategyGame.Battle.Game.Enemy
     {
         public override IEnumerator Script()
         {
-            MapUnit unit = TeamUnits(Team.enemy)
+            MapUnit unit = enemyUnits
                 .Where(x => x.ap > 0)
-                .ToList()
-                .RandomPick();
+                .First();
 
-            yield return game.state.SteadyChange(new ChooseAbility { unit = unit });
+            yield return game.state.SteadyChange(new ChooseAbilityAndTargets { unit = unit });
         }
     }
 
-    class ChooseAbility : BattleScript
+    class ChooseAbilityAndTargets : BattleScript
     {
         public MapUnit unit = null;
 
         public override IEnumerator Script()
         {
-            foreach(IUnitAbility ability in unit.abilities)
+            if (unit.ai == null)
             {
-                if (ability.canPayCost && ability.CanTarget())
+                IUnitAbility ability = unit.abilities
+                    .FirstOrDefault(UnitAbilityExt.CanUse);
+
+                if (ability == default(IUnitAbility))
                 {
-                    yield return game.state.SteadyChange(new ChooseTarget { ability = ability });
-                    break;
+                    Debug.Log(unit.name + " has no viable abilities; wasting " + unit.ap + " AP.");
+                    unit.ap = 0;
+
+                    yield return game.state.SteadyChange(new ChooseUnit());
+                }
+                else
+                {
+                    while (ability.CanTarget() && !ability.HasMaxTargets())
+                    {
+                        HexCoords target = ability.GetRange()
+                            .ToList()
+                            .RandomPick();
+
+                        ability.SelectTarget(target);
+                    }
+
+                    yield return game.state.SteadyChange(new ExecuteAbility { ability = ability });
                 }
             }
-        }
-    }
-
-    class ChooseTarget : BattleScript
-    {
-        public IUnitAbility ability = null;
-
-        public override IEnumerator Script()
-        {
-            while(ability.CanTarget() && !ability.HasMaxTargets())
+            else
             {
-                HexCoords target = ability.GetRange()
-                    .ToList()
-                    .RandomPick();
+                IUnitAbility ability = unit.ai.ChooseAbilityAndTargets();
 
-                ability.SelectTarget(target);
+                if (ability == null)
+                    yield return game.state.SteadyChange(new ChooseUnit());
+                else
+                    yield return game.state.SteadyChange(new ExecuteAbility { ability = ability });
             }
-
-            yield return game.state.SteadyChange(new ExecuteAbility { ability = ability });
         }
     }
 

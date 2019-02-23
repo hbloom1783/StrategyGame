@@ -1,10 +1,11 @@
-﻿using GridLib.Hex;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using StrategyGame.Battle.Map;
 using System.Collections;
 using UnityEngine;
 using Athanor.Tweening;
+using GridLib.Hex;
+using StrategyGame.Battle.UI;
 
 namespace StrategyGame.Battle.Game.Abilities
 {
@@ -16,13 +17,25 @@ namespace StrategyGame.Battle.Game.Abilities
 
         public MapUnit unit { get { return GetComponentInParent<MapUnit>(); } }
 
+        private SmoothCam smoothCam { get { return UI.BattleUi.instance.smoothCam; } }
+
         #endregion
 
-        #region Ability button
+        #region Metadata
 
         [SerializeField]
         private Sprite _icon = null;
         public Sprite icon { get { return _icon; } }
+
+        [SerializeField]
+        private List<Descriptor> descriptorList = new List<Descriptor>();
+        public IEnumerable<Descriptor> descriptors
+        {
+            get
+            {
+                return descriptorList;
+            }
+        }
 
         #endregion
 
@@ -70,8 +83,8 @@ namespace StrategyGame.Battle.Game.Abilities
             {
                 return unit.loc.CompoundRing(1, (uint)unit.jump)
                     .Where(map.InBounds)
-                    .Where(x => map[x].unitPresent != null)
-                    .Where(x => map[x].unitPresent.team != unit.team);
+                    .Where(x => map.MapCellAt(x).unitPresent != null)
+                    .Where(x => map.MapCellAt(x).unitPresent.team != unit.team);
             }
             else if (landing == null)
             {
@@ -133,18 +146,23 @@ namespace StrategyGame.Battle.Game.Abilities
             }
             else
             {
+                smoothCam.PushLock(unit.transform);
+
                 yield return unit.transform.ParabolicTween(
                     map.GridToWorld(target),
-                    unit.loc.DistanceTo(target) / 2);
+                    unit.loc.DistanceTo(target) / 2.0f);
 
                 // deal damage
-                map[target].unitPresent.TakeDamage(1);
+                map.MapCellAt(target).unitPresent.TakeDamage(1);
 
                 yield return unit.transform.ParabolicTween(
                     map.GridToWorld(landing),
-                    unit.loc.DistanceTo(landing) / 2);
+                    0.5f,
+                    0.5f);
 
                 map.PlaceUnit(unit, landing);
+
+                smoothCam.PopLock();
             }
         }
     }

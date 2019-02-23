@@ -15,11 +15,21 @@ namespace StrategyGame.Battle.Game.Abilities
 
         #endregion
 
-        #region Ability button
+        #region Metadata
 
         [SerializeField]
         private Sprite _icon = null;
         public Sprite icon { get { return _icon; } }
+
+        [SerializeField]
+        private List<Descriptor> descriptorList = new List<Descriptor>();
+        public IEnumerable<Descriptor> descriptors
+        {
+            get
+            {
+                return descriptorList;
+            }
+        }
 
         #endregion
 
@@ -63,7 +73,9 @@ namespace StrategyGame.Battle.Game.Abilities
         // Default range is self-only
         public IEnumerable<HexCoords> GetRange()
         {
-            if (!this.HasMinTargets())
+            if (this.HasMaxTargets())
+                return new HexCoords[0];
+            else if (range != null)
                 return range.rangeArea;
             else
                 return new[] { unit.loc };

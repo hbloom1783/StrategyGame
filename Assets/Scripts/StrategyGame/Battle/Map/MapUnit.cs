@@ -1,7 +1,8 @@
 ﻿using Athanor.Pooling;
-using GridLib.Hex;
 using GridLib.Pathing;
+using GridLib.Hex;
 using StrategyGame.Battle.Game.Abilities;
+using StrategyGame.Battle.Game.Ai;
 using StrategyGame.Battle.Persistence;
 using StrategyGame.Battle.UI;
 using StrategyGame.Game;
@@ -50,6 +51,7 @@ namespace StrategyGame.Battle.Map
             set
             {
                 _hp = value;
+                if (_hp < 0) _hp = 0;
                 UpdateHealth();
             }
         }
@@ -62,6 +64,7 @@ namespace StrategyGame.Battle.Map
             set
             {
                 _ap = value;
+                if (_ap < 0) _ap = 0;
                 UpdateActions();
             }
         }
@@ -82,6 +85,14 @@ namespace StrategyGame.Battle.Map
                 return GetComponentsInChildren<IUnitAbility>();
             }
         }
+
+        #endregion
+
+        #region AI
+
+        private string aiName;
+
+        public UnitAi ai { get { return GetComponentInChildren<UnitAi>(); } }
 
         #endregion
 
@@ -118,7 +129,7 @@ namespace StrategyGame.Battle.Map
             {
                 healthContainer.Clear();
 
-                foreach (int idx in Enumerable.Range(0, hp))
+                if (hp > 0) foreach (int idx in Enumerable.Range(0, hp))
                 {
                     BattleIcon newIcon = game.pools.battleIconPool.Provide<BattleIcon>();
                     newIcon.form = IconForm.heart;
@@ -133,7 +144,7 @@ namespace StrategyGame.Battle.Map
             {
                 actionContainer.Clear();
 
-                foreach (int idx in Enumerable.Range(0, ap))
+                if (ap > 0) foreach (int idx in Enumerable.Range(0, ap))
                 {
                     BattleIcon newIcon = game.pools.battleIconPool.Provide<BattleIcon>();
                     newIcon.form = IconForm.action;
@@ -226,6 +237,13 @@ namespace StrategyGame.Battle.Map
                     GameObject ability = Instantiate(Resources.Load<GameObject>(name));
                     ability.transform.SetParent(transform, false);
                 }
+
+                aiName = value.ai;
+                if (aiName != "")
+                {
+                    GameObject ai = Instantiate(Resources.Load<GameObject>(aiName));
+                    ai.transform.SetParent(transform, false);
+                }
             }
         }
 
@@ -263,16 +281,16 @@ namespace StrategyGame.Battle.Map
 
         public bool CanEnter(HexCoords loc)
         {
-            if (map[loc].isWalkable)
-                return map[loc].unitPresent == null;
+            if (map.MapCellAt(loc).canWalkThru)
+                return map.MapCellAt(loc).unitPresent == null;
             else
                 return false;
         }
 
         public bool CanStay(HexCoords loc)
         {
-            if (map[loc].isWalkable)
-                return map[loc].unitPresent == null;
+            if (map.MapCellAt(loc).canWalkThru)
+                return map.MapCellAt(loc).unitPresent == null;
             else
                 return false;
         }
@@ -285,6 +303,12 @@ namespace StrategyGame.Battle.Map
         public int CostToEnter(HexCoords loc)
         {
             return 1;
+        }
+
+        public bool CanTraverse(HexCoords src, HexCoords dst)
+        {
+            int dElev = Mathf.RoundToInt(Mathf.Abs(map.MapCellAt(dst).elevation - map.MapCellAt(src).elevation));
+            return dElev <= 1;
         }
 
         public int Heuristic(HexCoords src, HexCoords dst)

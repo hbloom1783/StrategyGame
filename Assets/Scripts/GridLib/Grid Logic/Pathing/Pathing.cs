@@ -5,7 +5,7 @@ using Athanor.Collections.Generic;
 
 namespace GridLib.Pathing
 {
-    public class PathNode<TCoords> : IComparable<PathNode<TCoords>> where TCoords : IEquatable<TCoords>
+    public class PathNode<TCoords> : IComparable<PathNode<TCoords>> where TCoords : ICoords<TCoords>
     {
         public int costToNode;
         public int estToGoal;
@@ -51,6 +51,11 @@ namespace GridLib.Pathing
         }
     }
 
+    public interface ICoords<TCoords> : IEquatable<TCoords>
+    {
+        int DistanceTo(ICoords<TCoords> other);
+    }
+
     public interface ICanPath<TCoords> where TCoords : IEquatable<TCoords>
     {
         TCoords loc { get; }
@@ -59,6 +64,7 @@ namespace GridLib.Pathing
         bool CanEnter(TCoords loc);
         bool CanStay(TCoords loc);
         bool CanLeave(TCoords loc);
+        bool CanTraverse(TCoords src, TCoords dst);
 
         int CostToEnter(TCoords loc);
         int Heuristic(TCoords src, TCoords dst);
@@ -71,7 +77,7 @@ namespace GridLib.Pathing
         private static bool IsRedundant<TCoords>(
             this Dictionary<TCoords, PathNode<TCoords>> result,
             PathNode<TCoords> candidate)
-            where TCoords : IEquatable<TCoords>
+            where TCoords : ICoords<TCoords>
         {
             if (!result.Keys.Contains(candidate.loc)) return false;
             else return result[candidate.loc].costToNode <= candidate.costToNode;
@@ -80,7 +86,7 @@ namespace GridLib.Pathing
         public static IDictionary<TCoords, PathNode<TCoords>> Dijkstra<TCoords>(
             this ICanPath<TCoords> unit,
             int maxCost = int.MaxValue)
-            where TCoords : IEquatable<TCoords>
+            where TCoords : ICoords<TCoords>
         {
             Dictionary<TCoords, PathNode<TCoords>> result = new Dictionary<TCoords, PathNode<TCoords>>();
 
@@ -108,7 +114,8 @@ namespace GridLib.Pathing
                         // If we can enter any neighboring locations, try to do so later.
                         IEnumerable<TCoords> neighbors = unit
                             .ValidNeighbors(current.loc)
-                            .Where(unit.CanEnter);
+                            .Where(unit.CanEnter)
+                            .Where(x => unit.CanTraverse(current.loc, x));
                         foreach(TCoords neighbor in neighbors)
                             frontier.Enqueue(new PathNode<TCoords>(
                                 current.costToNode + 1,
@@ -127,8 +134,9 @@ namespace GridLib.Pathing
         public static IEnumerable<TCoords> AStar<TCoords>(
             this ICanPath<TCoords> unit,
             TCoords dst,
-            int maxCost = int.MaxValue)
-            where TCoords : IEquatable<TCoords>
+            int maxCost = int.MaxValue,
+            int goalDistance = 0)
+            where TCoords : ICoords<TCoords>
         {
             Dictionary<TCoords, PathNode<TCoords>> result = new Dictionary<TCoords, PathNode<TCoords>>();
 
@@ -144,7 +152,7 @@ namespace GridLib.Pathing
                 PathNode<TCoords> current = frontier.Dequeue();
 
                 // If we've arrived
-                if (current.loc.Equals(dst)) return current.pathTo.Skip(1);
+                if (current.loc.DistanceTo(dst) == goalDistance) return current.pathTo.Skip(1);
 
                 // If we already have a path to this location that's at least this cheap,
                 // don't repeat it
@@ -160,7 +168,8 @@ namespace GridLib.Pathing
                         // If we can enter any neighboring locations, try to do so later.
                         IEnumerable<TCoords> neighbors = unit
                             .ValidNeighbors(current.loc)
-                            .Where(unit.CanEnter);
+                            .Where(unit.CanEnter)
+                            .Where(x => unit.CanTraverse(current.loc, x));
                         foreach (TCoords neighbor in neighbors)
                             frontier.Enqueue(new PathNode<TCoords>(
                                 current.costToNode + 1,

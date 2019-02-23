@@ -25,8 +25,10 @@ namespace StrategyGame.Strategic.Map
         invalid,
     }
     
-    public class MapCell : HexGridCell, IPoolable
+    public class MapCell : MonoBehaviour, IPoolable
     {
+        public HexGridCell gridCell { get { return GetComponent<HexGridCell>(); } }
+
         private MapUnit _unitPresent;
         public MapUnit unitPresent
         {
@@ -159,7 +161,7 @@ namespace StrategyGame.Strategic.Map
             }
 
             if (debugText != null)
-                debugText.text = loc + "\n" + type;
+                debugText.text = gridCell.loc + "\n" + type;
         }
 
         #endregion
@@ -194,7 +196,7 @@ namespace StrategyGame.Strategic.Map
 
                 if (value.unitPresent != null)
                 {
-                    map.PlaceUnit(GameController.instance.pools.strategicMapUnitPool.Provide<MapUnit>(), loc);
+                    map.PlaceUnit(GameController.instance.pools.strategicMapUnitPool.Provide<MapUnit>(), gridCell.loc);
                     unitPresent.persist = value.unitPresent;
                 }
             }

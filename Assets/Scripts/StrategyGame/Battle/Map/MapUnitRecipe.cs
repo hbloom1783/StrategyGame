@@ -15,6 +15,8 @@ namespace StrategyGame.Battle.Map
 
         public string[] abilityList = new string[0];
 
+        public string ai = "";
+
         public BattleUnitPersist persist
         {
             get
@@ -35,6 +37,8 @@ namespace StrategyGame.Battle.Map
                     jump = jump,
 
                     abilityList = abilityList,
+
+                    ai = ai,
                 };
             }
         }

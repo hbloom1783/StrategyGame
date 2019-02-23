@@ -27,13 +27,22 @@ namespace StrategyGame.Battle.Persistence
         public int jump = 0;
 
         public string[] abilityList = new string[0];
+
+        public string ai = "";
     }
 
     [Serializable]
     public class BattleCellPersist
     {
-        public CellType type = CellType.walkable;
+        public TerrainPersist type = TerrainPersist.greenOpen;
+        public int elevation = 0;
         public BattleUnitPersist unitPresent = null;
+
+        public BattleCellPersist(TerrainPersist type = TerrainPersist.greenOpen, int elevation = 0)
+        {
+            this.type = type;
+            this.elevation = 0;
+        }
     }
 
     [Serializable]
@@ -42,39 +51,26 @@ namespace StrategyGame.Battle.Persistence
         public Dictionary<HexCoords, BattleCellPersist> mapContents =
             new Dictionary<HexCoords, BattleCellPersist>();
 
-        public Team turn = Team.player;
+        public Team whoseTurn = Team.player;
 
         public static BattlePersist Generate()
         {
             BattlePersist result = new BattlePersist();
-            
-            // Generate blank
-            foreach (HexCoords loc in HexCoords.O.CompoundRing(0, 6))
-                result.mapContents[loc] = new BattleCellPersist();
-
-            // Perlin-fill inside
-            PerlinState perlin = new PerlinState();
-            foreach (var kv in result.mapContents)
-            {
-                if (perlin.Sample(kv.Key.x, kv.Key.y) > 0.5f)
-                    kv.Value.type = CellType.notWalkable;
-                else
-                    kv.Value.type = CellType.walkable;
-            }
+            result.mapContents = MapGeneration.Generate(MapType.greenOpen);
             
             // Add units
             result.mapContents.Values
-                .Where(x => (x.type == CellType.walkable) && (x.unitPresent == null))
+                .Where(x => (x.type == TerrainPersist.greenOpen) && (x.unitPresent == null))
                 .ToList()
                 .RandomPick()
-                .unitPresent = Resources.Load<MapUnitRecipe>("Battle Units/Sonic").persist;
+                .unitPresent = Resources.Load<MapUnitRecipe>("Battle/Units/Sonic").persist;
 
             foreach (int idx in Enumerable.Range(0, Random.Range(2, 4)))
                 result.mapContents.Values
-                    .Where(x => (x.type == CellType.walkable) && (x.unitPresent == null))
+                    .Where(x => (x.type == TerrainPersist.greenOpen) && (x.unitPresent == null))
                     .ToList()
                     .RandomPick()
-                    .unitPresent = Resources.Load<MapUnitRecipe>("Battle Units/Motobug").persist;
+                    .unitPresent = Resources.Load<MapUnitRecipe>("Battle/Units/Motobug").persist;
 
             return result;
         }

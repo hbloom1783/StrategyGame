@@ -1,5 +1,6 @@
 ﻿using Athanor.Colors;
 using Athanor.Tweening;
+using GridLib.Hex;
 using StrategyGame.Battle.Game.Abilities;
 using StrategyGame.Battle.Map;
 using StrategyGame.Battle.UI;
@@ -26,6 +27,8 @@ namespace StrategyGame.Battle.Game.Player
         public override void EnterState()
         {
             runningScript = game.StartCoroutine(ShimmerScript());
+
+            game.input.keyDown += KeyDown;
         }
 
         public override void LeaveState()
@@ -33,10 +36,46 @@ namespace StrategyGame.Battle.Game.Player
             ClearSelected();
             ClearShimmer();
 
+            game.input.keyDown -= KeyDown;
+
             if (runningScript != null)
             {
                 game.StopCoroutine(ShimmerScript());
                 runningScript = null;
+            }
+        }
+
+        #endregion
+
+        #region Event handlers
+
+        private void KeyDown(KeyCode kc)
+        {
+            switch (kc)
+            {
+                case KeyCode.W:
+                    ui.smoothCam.posDstY += .25f;
+                    break;
+
+                case KeyCode.A:
+                    ui.smoothCam.posDstX -= .25f;
+                    break;
+
+                case KeyCode.S:
+                    ui.smoothCam.posDstY -= .25f;
+                    break;
+
+                case KeyCode.D:
+                    ui.smoothCam.posDstX += .25f;
+                    break;
+
+                case KeyCode.R:
+                    ui.smoothCam.sizeDst -= .25f;
+                    break;
+
+                case KeyCode.F:
+                    ui.smoothCam.sizeDst += .25f;
+                    break;
             }
         }
 
@@ -151,6 +190,9 @@ namespace StrategyGame.Battle.Game.Player
 
         public override IEnumerator Script()
         {
+            ui.smoothCam.posDst = playerUnits.First().transform.position;
+            ui.smoothCam.sizeDst = 5.0f;
+
             ui.marqueeText.shown = true;
             ui.marqueeText.text = "Player Turn";
             yield return ui.marqueeText.ColorTween(clearWhite, Color.blue, 1.0f);
@@ -203,14 +245,15 @@ namespace StrategyGame.Battle.Game.Player
             map.events.pointerExit += PointerExit;
 
             selectableCells = map.cells
+                .Select(x => x.MapCell())
                 .Where(x => x.unitPresent != null)
                 .Where(x => x.unitPresent.team == Team.player)
                 .Where(x => x.unitPresent.ap > 0)
                 .ToList();
             selectableCells.ForEach(AddShimmer);
             
-            if (selectableCells.Contains(map.mouseCell))
-                AddSelected(map.mouseCell, greenTint);
+            if (selectableCells.Contains(map.mouseCell.MapCell()))
+                AddSelected(map.mouseCell.MapCell(), greenTint);
 
             ui.instructions.text = "Select a unit.";
         }
@@ -334,6 +377,8 @@ namespace StrategyGame.Battle.Game.Player
 
         public override void EnterState()
         {
+            ui.smoothCam.sizeDst = 5.0f;
+            ui.smoothCam.posDst = unit.transform.position;
             ui.instructions.text = "Select an ability.";
 
             game.input.mouseDown += MouseDown;
@@ -343,7 +388,7 @@ namespace StrategyGame.Battle.Game.Player
             {
                 AbilityButton newButton = game.pools.battleAbilityButtonPool.Provide<AbilityButton>();
                 newButton.ability = ability;
-                newButton.interactable = ability.canPayCost && ability.CanTarget();
+                newButton.interactable = ability.CanUse();
                 ui.abilityBar.Store(newButton);
             }
         }
@@ -457,19 +502,21 @@ namespace StrategyGame.Battle.Game.Player
             }
         }
 
+        private HexCoords lastSelected = null;
+
         private void ResetSelection()
         {
             ClearSelected();
             
             ability.GetCoveredArea()
                 .ToList()
-                .ForEach(x => AddSelected(map[x], blueTint));
+                .ForEach(x => AddSelected(map[x].MapCell(), blueTint));
 
-            if (!ability.HasMaxTargets())
+            if (!ability.HasMaxTargets() && (lastSelected != null))
             {
-                if (selectableCells.Contains(map.mouseCell))
-                    ability.GetAoE(map.mousePosition)
-                        .Select(map.CellAt)
+                if (selectableCells.Contains(map.MapCellAt(lastSelected)))
+                    ability.GetAoE(lastSelected)
+                        .Select(map.MapCellAt)
                         .ToList()
                         .ForEach(x => AddSelected(x, blueTint));
             }
@@ -482,6 +529,7 @@ namespace StrategyGame.Battle.Game.Player
             selectableCells = ability.GetRange()
                 .Where(map.InBounds)
                 .Select(map.CellAt)
+                .Select(x => x.MapCell())
                 .ToList();
 
             if (!ability.HasMaxTargets())
@@ -545,7 +593,7 @@ namespace StrategyGame.Battle.Game.Player
                 MapCell cell = child.GetComponent<MapCell>();
                 if (selectableCells.Contains(cell))
                 {
-                    ability.SelectTarget(cell.loc);
+                    ability.SelectTarget(cell.gridCell.loc);
                     UpdateInstructions();
 
                     if (ability.HasMinTargets())
@@ -575,11 +623,13 @@ namespace StrategyGame.Battle.Game.Player
 
         private void PointerEnter(PointerEventData eventData, GameObject child)
         {
+            lastSelected = child.GetComponent<MapCell>().loc;
             ResetSelection();
         }
 
         private void PointerExit(PointerEventData eventData, GameObject child)
         {
+            lastSelected = null;
             ResetSelection();
         }
 

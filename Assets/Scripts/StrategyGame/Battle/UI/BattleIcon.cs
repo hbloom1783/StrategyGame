@@ -1,6 +1,5 @@
 ﻿using Athanor.Pooling;
 using StrategyGame.UI;
-using UnityEngine;
 using UnityEngine.UI;
 
 namespace StrategyGame.Battle.UI

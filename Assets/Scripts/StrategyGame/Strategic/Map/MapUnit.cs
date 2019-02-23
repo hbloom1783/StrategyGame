@@ -71,25 +71,30 @@ namespace StrategyGame.Strategic.Map
 
         public bool CanEnter(HexCoords loc)
         {
-            return map[loc].isFilled;
+            return map.MapCellAt(loc).isFilled;
         }
 
         public bool CanStay(HexCoords loc)
         {
-            return map[loc].isFilled;
+            return map.MapCellAt(loc).isFilled;
         }
 
         public bool CanLeave(HexCoords loc)
         {
-            return map[loc].isFilled;
+            return map.MapCellAt(loc).isFilled;
         }
 
         public int CostToEnter(HexCoords loc)
         {
-            if (map[loc].type != CellType.empty)
+            if (map.MapCellAt(loc).type != CellType.empty)
                 return 1;
             else
                 return 10000;
+        }
+
+        public bool CanTraverse(HexCoords src, HexCoords dst)
+        {
+            return true;
         }
 
         public int Heuristic(HexCoords src, HexCoords dst)

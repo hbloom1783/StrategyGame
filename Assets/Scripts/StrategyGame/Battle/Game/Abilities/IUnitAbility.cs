@@ -7,6 +7,14 @@ using UnityEngine;
 
 namespace StrategyGame.Battle.Game.Abilities
 {
+    public enum Descriptor
+    {
+        attack,
+        move,
+        melee,
+        ranged,
+    }
+
     public interface IUnitAbility
     {
         MapUnit unit { get; }
@@ -30,6 +38,8 @@ namespace StrategyGame.Battle.Game.Abilities
         void PayCost();
 
         IEnumerator Execute();
+
+        IEnumerable<Descriptor> descriptors { get; }
     }
 
     public static class UnitAbilityExt
@@ -47,6 +57,11 @@ namespace StrategyGame.Battle.Game.Abilities
         public static bool CanTarget(this IUnitAbility ability)
         {
             return ability.GetRange().Any();
+        }
+
+        public static bool CanUse(this IUnitAbility ability)
+        {
+            return ability.canPayCost && ability.CanTarget();
         }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using GridLib.Hex;
 using Athanor.Tweening;
+using StrategyGame.Battle.UI;
 
 namespace StrategyGame.Battle.Game.Abilities
 {
@@ -9,17 +10,23 @@ namespace StrategyGame.Battle.Game.Abilities
     {
         public float airTime = 1.00f;
 
+        private SmoothCam smoothCam { get { return UI.BattleUi.instance.smoothCam; } }
+
         public override IEnumerator Proc(IEnumerable<HexCoords> targets)
         {
-            foreach (HexCoords target in targets)
+            smoothCam.PushLock(unit.transform);
+
+            foreach (HexCoords newLoc in targets)
             {
                 yield return unit.transform.ParabolicTween(
-                    map.GridToWorld(target),
-                    target.DistanceTo(unit.loc) / 2.0f,
+                    map.MapCellAt(newLoc).unitFooting.position,
+                    newLoc.DistanceTo(unit.loc) / 2.0f,
                     airTime);
 
-                map.PlaceUnit(unit, target);
+                map.PlaceUnit(unit, newLoc);
             }
+
+            smoothCam.PopLock();
         }
     }
 }

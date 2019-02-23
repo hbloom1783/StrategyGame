@@ -32,6 +32,8 @@ namespace StrategyGame.Battle.UI
 
         #region UI Elements
 
+        public SmoothCam smoothCam = null;
+
         public ColorText marqueeText = null;
 
         public UiElement systemMenuButton = null;

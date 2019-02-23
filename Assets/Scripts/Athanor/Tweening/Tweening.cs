@@ -10,7 +10,7 @@ namespace Athanor.Tweening
 
         public static IEnumerable<float> LinearTimeTween(float duration)
         {
-            for (float timeElapsed = 0.0f; timeElapsed < duration; timeElapsed += Time.deltaTime)
+            for (float timeElapsed = Time.deltaTime; timeElapsed < duration; timeElapsed += Time.deltaTime)
                 yield return timeElapsed / duration;
 
             // Just to be sure
@@ -23,14 +23,14 @@ namespace Athanor.Tweening
                 yield return timeElapsed / duration;
 
             // Just to be sure
-            yield return 0.0f;
+            //yield return 0.0f;
         }
 
         // Assumes a parabola crossing (0,0) (0.5,1) (1,0)
         // y = 4x - 4x^2 = 4x(1 - x);
         private static float ParabolicHeight(float x)
         {
-            return (4 * x) * (1 - x);
+            return 4 * x * (1 - x);
         }
 
         #endregion

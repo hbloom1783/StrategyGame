@@ -1,16 +1,17 @@
 ﻿using Athanor.Pooling;
-using GridLib.Hex;
 using UnityEngine;
 using StrategyGame.Game;
 using StrategyGame.Battle.Persistence;
 using System.Collections.Generic;
+using GridLib.Hex;
 
 namespace StrategyGame.Battle.Map
 {
-    public enum CellType
+    public enum TerrainPersist
     {
-        walkable,
-        notWalkable,
+        greenOpen,
+        greenRoad,
+        greenTree,
     }
 
     public enum HighlightState
@@ -20,8 +21,11 @@ namespace StrategyGame.Battle.Map
         shimmer,
     }
     
-    public class MapCell : HexGridCell, IPoolable
+    public class MapCell : MonoBehaviour, IPoolable
     {
+        public HexGridCell gridCell { get { return GetComponent<HexGridCell>(); } }
+        public HexCoords loc { get { return gridCell.loc; } }
+
         private MapUnit _unitPresent = null;
         public MapUnit unitPresent
         {
@@ -38,49 +42,68 @@ namespace StrategyGame.Battle.Map
 
         public IEnumerable<MapCell> neighbors;
 
-        #region Appearance
+        public Transform unitFooting;
+        public SpriteRenderer cellSprite;
 
-        public Sprite walkableSprite = null;
-        public Sprite notWalkableSprite = null;
+        #region Appearance
 
         #region Cell type
 
-        private CellType _type = CellType.walkable;
-        public CellType type
+        [SerializeField]
+        private BattleTerrain greenOpen = null;
+
+        [SerializeField]
+        private BattleTerrain greenRoad = null;
+
+        [SerializeField]
+        private BattleTerrain greenTree = null;
+
+        private TerrainPersist _type = TerrainPersist.greenOpen;
+        private BattleTerrain terrain = null;
+        public TerrainPersist type
         {
             get { return _type; }
             set
             {
                 _type = value;
-                UpdateAppearance();
+                FixTerrain();
             }
         }
 
-        private Sprite SwitchSprite()
-        {
-            switch (type)
-            {
-                case CellType.walkable: return walkableSprite;
-                case CellType.notWalkable: return notWalkableSprite;
-                default: return null;
-            }
-        }
-
-        public bool isWalkable
+        public bool canWalkThru
         {
             get
             {
-                switch(type)
-                {
-                    case CellType.walkable:
-                        return true;
-
-                    default:
-                    case CellType.notWalkable:
-                        return false;
-                }
+                return terrain.isWalkable;
             }
         }
+
+        public bool canSeeThru
+        {
+            get
+            {
+                return terrain.canSeeThru;
+            }
+        }
+
+        public void FixTerrain()
+        {
+            switch (_type)
+            {
+                case TerrainPersist.greenOpen: terrain = greenOpen; break;
+                case TerrainPersist.greenRoad: terrain = greenRoad; break;
+                case TerrainPersist.greenTree: terrain = greenTree; break;
+            }
+
+            if (unitFooting != null)
+                unitFooting.localPosition = terrain.unitFooting;
+        }
+
+        #endregion
+
+        #region Elevation
+
+        public int elevation = 0;
 
         #endregion
 
@@ -131,27 +154,21 @@ namespace StrategyGame.Battle.Map
 
         #endregion
 
-        [SerializeField]
-        private SpriteRenderer spriteRenderer = null;
-
-        private Sprite sprite
-        {
-            get { return spriteRenderer.sprite; }
-            set { spriteRenderer.sprite = value; }
-        }
-
+        private Color _color = Color.white;
         public Color color
         {
-            get { return spriteRenderer.color; }
-            set { spriteRenderer.color = value; }
+            get { return _color; }
+            set
+            {
+                _color = value;
+                if (cellSprite != null)
+                    cellSprite.color = value;
+            }
         }
 
         private void UpdateAppearance()
         {
-            if (spriteRenderer != null)
-            {
-                sprite = SwitchSprite();
-            }
+            cellSprite.sprite = terrain.sprite;
         }
 
         #endregion
@@ -167,8 +184,7 @@ namespace StrategyGame.Battle.Map
         {
             get
             {
-                BattleCellPersist result = new BattleCellPersist();
-                result.type = type;
+                BattleCellPersist result = new BattleCellPersist(type, elevation);
                 if (unitPresent != null)
                     result.unitPresent = unitPresent.persist;
                 return result;
@@ -177,6 +193,7 @@ namespace StrategyGame.Battle.Map
             set
             {
                 type = value.type;
+                elevation = value.elevation;
 
                 if (unitPresent != null) unitPresent.sticker.Return();
                 if (value.unitPresent == null)
@@ -185,7 +202,7 @@ namespace StrategyGame.Battle.Map
                 }
                 else
                 {
-                    map.PlaceUnit(GameController.instance.pools.battleMapUnitPool.Provide<MapUnit>(), loc);
+                    map.PlaceUnit(GameController.instance.pools.battleMapUnitPool.Provide<MapUnit>(), gridCell.loc);
                     unitPresent.persist = value.unitPresent;
                 }
             }

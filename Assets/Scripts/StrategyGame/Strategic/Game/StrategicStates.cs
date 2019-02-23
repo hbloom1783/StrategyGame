@@ -141,7 +141,7 @@ namespace StrategyGame.Strategic.Game
                 MapCell cell = child.GetComponent<MapCell>();
 
                 ui.infoWindow.shown = true;
-                ui.infoWindow.title = "Info for " + cell.loc;
+                ui.infoWindow.title = "Info for " + cell.gridCell.loc;
                 ui.infoWindow.body = "Terrain is " + cell.type;
                 if (cell.unitPresent == null)
                 {
@@ -275,10 +275,10 @@ namespace StrategyGame.Strategic.Game
                     .ForEach(x => map.InitCell(x));
 
                 // Piece overlaps filled cells
-                if (targetArea.Select(map.CellAt).Any(x => x.isFilled))
+                if (targetArea.Select(map.CellAt).Any(x => x.MapCell().isFilled))
                     return false;
                 // Piece frontier overlaps filled cells
-                else if (targetArea.Frontier().Select(map.CellAt).Any(x => x.isFilled))
+                else if (targetArea.Frontier().Select(map.CellAt).Any(x => x.MapCell().isFilled))
                     return true;
                 // No overlaps
                 else
@@ -299,8 +299,8 @@ namespace StrategyGame.Strategic.Game
                 {
                     if (!map.InBounds(kv.Key)) map.InitCell(kv.Key);
 
-                    map[kv.Key].overlayType = kv.Value;
-                    if (!valid) map[kv.Key].highlight = Highlight.invalid;
+                    map.MapCellAt(kv.Key).overlayType = kv.Value;
+                    if (!valid) map.MapCellAt(kv.Key).highlight = Highlight.invalid;
                 }
             }
         }
@@ -314,8 +314,8 @@ namespace StrategyGame.Strategic.Game
 
                 foreach (HexCoords loc in targetArea)
                 {
-                    map[loc].overlayType = CellType.empty;
-                    map[loc].highlight = Highlight.neutral;
+                    map.MapCellAt(loc).overlayType = CellType.empty;
+                    map.MapCellAt(loc).highlight = Highlight.neutral;
                 }
             }
         }
@@ -326,7 +326,7 @@ namespace StrategyGame.Strategic.Game
 
         private void PointerEnter(PointerEventData eventData, GameObject child)
         {
-            center = child.GetComponent<MapCell>().loc;
+            center = child.GetComponent<MapCell>().gridCell.loc;
             MarkPiece(center);
         }
 
@@ -345,7 +345,7 @@ namespace StrategyGame.Strategic.Game
 
                 // Update map
                 foreach (var kv in targetArea)
-                    map[kv.Key].type = kv.Value;
+                    map.MapCellAt(kv.Key).type = kv.Value;
 
                 // Update piece menu
                 map.SaveToPersistence();
@@ -415,7 +415,7 @@ namespace StrategyGame.Strategic.Game
                 game.state.ChangeState(new UnitIsMoving
                 {
                     unit = unit,
-                    path = unit.AStar(cell.loc),
+                    path = unit.AStar(cell.gridCell.loc),
                 });
             }
         }

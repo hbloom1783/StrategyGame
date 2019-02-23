@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GridLib.Pathing;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -123,6 +124,16 @@ namespace GridLib.Hex
         #endregion
     }
 
+    public class Extremes
+    {
+        public int minX = 0;
+        public int maxX = 0;
+        public int minY = 0;
+        public int maxY = 0;
+        public int minZ = 0;
+        public int maxZ = 0;
+    }
+
     public static class IEnumerableExt
     {
         public static IEnumerable<HexCoords> Frontier(this IEnumerable<HexCoords> region)
@@ -148,10 +159,27 @@ namespace GridLib.Hex
                 yield return HexCoords.O;
             }
         }
+
+        public static Extremes FindExtremes(this IEnumerable<HexCoords> region)
+        {
+            Extremes result = new Extremes();
+
+            foreach(HexCoords loc in region)
+            {
+                if (loc.x < result.minX) result.minX = loc.x;
+                if (loc.x > result.maxX) result.maxX = loc.x;
+                if (loc.y < result.minY) result.minY = loc.y;
+                if (loc.y > result.maxY) result.maxY = loc.y;
+                if (loc.z < result.minZ) result.minZ = loc.z;
+                if (loc.z > result.maxZ) result.maxZ = loc.z;
+            }
+
+            return result;
+        }
     }
     
     [Serializable]
-    public class HexCoords : IEquatable<HexCoords>
+    public class HexCoords : ICoords<HexCoords>
     {
         #region Internal state
 
@@ -271,6 +299,11 @@ namespace GridLib.Hex
         public bool Adjacent(HexCoords other)
         {
             return DistanceTo(other) == 1;
+        }
+
+        public int DistanceTo(ICoords<HexCoords> other)
+        {
+            return DistanceTo((HexCoords)other);
         }
 
         public int DistanceTo(HexCoords other)
@@ -406,37 +439,6 @@ namespace GridLib.Hex
             for (uint radius = minRadius; radius <= maxRadius; radius++)
             {
                 foreach (HexCoords loc in Ring(radius))
-                    yield return loc;
-            }
-        }
-
-        public IEnumerable<HexCoords> Arc(uint radius, HexFacing begin, HexFacing end)
-        {
-            HexCoords cursor = this + (begin.ToOffset() * (int)radius);
-
-            // Yielding the initial cursor position is unique to arcs,
-            // and is why this code works at radius 0 while rings do not.
-            yield return cursor;
-
-            // We need to track our travel facing.
-            // When following a circle, we start at the southwest corner heading north.
-            // Southwest to north is rotating CW twice.
-            // Any corner you start at, your travel on that side will be CW twice.
-            foreach (HexFacing facing in begin.Rotate(2).CompassTurnCW(end.Rotate(1)))
-            {
-                for (int idx = 0; idx < radius; idx++)
-                {
-                    cursor += facing;
-                    yield return cursor;
-                }
-            }
-        }
-
-        public IEnumerable<HexCoords> CompoundArc(uint minRadius, uint maxRadius, HexFacing begin, HexFacing end)
-        {
-            for (uint radius = minRadius; radius <= maxRadius; radius++)
-            {
-                foreach (HexCoords loc in Arc(radius, begin, end))
                     yield return loc;
             }
         }
